@@ -10,7 +10,7 @@ CLIENT_ID = os.environ.get('AZURE_CLIENT_ID')
 CLIENT_SECRET = os.environ.get('AZURE_CLIENT_SECRET')
 TENANT_ID = os.environ.get('AZURE_TENANT_ID')
 AUTHORITY = f'https://login.microsoftonline.com/{TENANT_ID}'
-REDIRECT_URI = 'https://back1-dfcxgahzd2ewa8cf.eastasia-01.azurewebsites.net/getAToken'  # Must be the same as the redirect URI in Azure AD
+REDIRECT_URI = '/https://back1-dfcxgahzd2ewa8cf.eastasia-01.azurewebsites.net/getAToken'  # Must be the same as the redirect URI in Azure AD
 SCOPE = ["User.Read"]  # Example scope
 
 # MSAL configuration
