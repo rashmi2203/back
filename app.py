@@ -1,6 +1,5 @@
 import os
-from flask import Flask, redirect, url_for, session, request
-from flask import render_template
+from flask import Flask, redirect, url_for, session, request, render_template
 import msal
 
 app = Flask(__name__)
@@ -11,7 +10,7 @@ CLIENT_ID = os.environ.get('AZURE_CLIENT_ID')
 CLIENT_SECRET = os.environ.get('AZURE_CLIENT_SECRET')
 TENANT_ID = os.environ.get('AZURE_TENANT_ID')
 AUTHORITY = f'https://login.microsoftonline.com/{TENANT_ID}'
-REDIRECT_PATH = 'https://back1-dfcxgahzd2ewa8cf.eastasia-01.azurewebsites.net/getAToken'  # Must be the same as the redirect URI in Azure AD
+REDIRECT_URI = 'https://back1-dfcxgahzd2ewa8cf.eastasia-01.azurewebsites.net/getAToken'  # Must be the same as the redirect URI in Azure AD
 SCOPE = ["User.Read"]  # Example scope
 
 # MSAL configuration
@@ -19,7 +18,7 @@ app.config.update(
     CLIENT_ID=CLIENT_ID,
     CLIENT_SECRET=CLIENT_SECRET,
     AUTHORITY=AUTHORITY,
-    REDIRECT_PATH=REDIRECT_PATH,
+    REDIRECT_URI=REDIRECT_URI,
     SCOPE=SCOPE
 )
 
@@ -38,12 +37,12 @@ def login():
     msal_app = _build_msal_app()
     auth_url = msal_app.get_authorization_request_url(
         scopes=app.config['SCOPE'],
-        redirect_uri=url_for('authorized', _external=True)
+        redirect_uri=app.config['REDIRECT_URI']
     )
     return redirect(auth_url)
 
 # Route to handle callback
-@app.route(app.config['REDIRECT_PATH'])
+@app.route('/getAToken')
 def authorized():
     if 'error' in request.args:
         return f"Error: {request.args['error_description']}", 400
@@ -52,7 +51,7 @@ def authorized():
     result = msal_app.acquire_token_by_authorization_code(
         request.args.get('code'),
         scopes=app.config['SCOPE'],
-        redirect_uri=url_for('authorized', _external=True)
+        redirect_uri=app.config['REDIRECT_URI']
     )
 
     if 'access_token' in result:
@@ -67,10 +66,12 @@ def profile():
     if 'access_token' not in session:
         return redirect(url_for('login'))
     
-    msal_app = _build_msal_app()
-    user_info = msal_app.get('/me', headers={
-        'Authorization': f'Bearer {session["access_token"]}'
-    }).json()
+    # Fetch user info from Microsoft Graph
+    import requests
+    user_info = requests.get(
+        'https://graph.microsoft.com/v1.0/me',
+        headers={'Authorization': f'Bearer {session["access_token"]}'}
+    ).json()
 
     return render_template('profile.html', user_info=user_info)
 
