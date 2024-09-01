@@ -1,6 +1,8 @@
 import os
 from flask import Flask, redirect, url_for, session, request, render_template
 import msal
+import pyodbc
+import requests
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY')  # Your Flask secret key
@@ -31,6 +33,17 @@ def _build_msal_app(cache=None):
         token_cache=cache
     )
 
+# Database connection function
+def get_db_connection():
+    conn_str = (
+        f"Driver={{ODBC Driver 17 for SQL Server}};"
+        f"Server={os.environ.get('DB_SERVER')};"
+        f"Database={os.environ.get('DB_NAME')};"
+        f"UID={os.environ.get('DB_USER')};"
+        f"PWD={os.environ.get('DB_PASSWORD')};"
+    )
+    return pyodbc.connect(conn_str)
+
 # Route to handle login
 @app.route('/login')
 def login():
@@ -56,6 +69,33 @@ def authorized():
 
     if 'access_token' in result:
         session['access_token'] = result['access_token']
+
+        # Fetch user info from Microsoft Graph
+        user_info = requests.get(
+            'https://graph.microsoft.com/v1.0/me',
+            headers={'Authorization': f'Bearer {session["access_token"]}'}
+        ).json()
+
+        session['user_email'] = user_info.get('mail')  # Store user's email in session
+
+        # Store the user data in the database
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check if the user already exists in the database
+        cursor.execute('SELECT * FROM Users WHERE email = ?', (session['user_email'],))
+        existing_user = cursor.fetchone()
+
+        if not existing_user:
+            # Insert new user into the database
+            cursor.execute('''
+                INSERT INTO Users (username, email, name)
+                VALUES (?, ?, ?)
+            ''', (user_info.get('userPrincipalName'), user_info.get('mail'), user_info.get('displayName')))
+            conn.commit()
+
+        conn.close()
+
         return redirect(url_for('profile'))
     else:
         return "Could not authenticate", 401
@@ -67,7 +107,6 @@ def profile():
         return redirect(url_for('login'))
     
     # Fetch user info from Microsoft Graph
-    import requests
     user_info = requests.get(
         'https://graph.microsoft.com/v1.0/me',
         headers={'Authorization': f'Bearer {session["access_token"]}'}

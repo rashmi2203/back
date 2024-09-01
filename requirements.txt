@@ -1,3 +1,4 @@
 Flask
 pyodbc
 msal  # Microsoft Authentication Library for Python
+requests
