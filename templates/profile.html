@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .profile-container {
+            max-width: 600px;
+            margin: 0 auto;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            text-align: center;
+        }
+        .profile-item {
+            margin-bottom: 10px;
+        }
+        .profile-item strong {
+            display: inline-block;
+            width: 120px;
+        }
+        .logout {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .logout a {
+            text-decoration: none;
+            color: #fff;
+            background-color: #007bff;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <h1>User Profile</h1>
+        <div class="profile-item">
+            <strong>Name:</strong> {{ user_info['displayName'] }}
+        </div>
+        <div class="profile-item">
+            <strong>Email:</strong> {{ user_info['mail'] or user_info['userPrincipalName'] }}
+        </div>
+        <div class="profile-item">
+            <strong>Job Title:</strong> {{ user_info['jobTitle'] or 'N/A' }}
+        </div>
+        <div class="profile-item">
+            <strong>Phone:</strong> {{ user_info['mobilePhone'] or 'N/A' }}
+        </div>
+        <div class="logout">
+            <a href="{{ url_for('logout') }}">Log Out</a>
+        </div>
+    </div>
+</body>
+</html>
