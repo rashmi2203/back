@@ -99,6 +99,16 @@ def authorized():
         return redirect(url_for('profile'))
     else:
         return "Could not authenticate", 401
+    
+@app.route('/testdb')
+def test_db_connection():
+    try:
+        conn = get_db_connection()
+        conn.close()
+        return "Database connection successful!"
+    except Exception as e:
+        return f"Error connecting to database: {str(e)}"
+
 
 # Route to display user profile
 @app.route('/profile')
